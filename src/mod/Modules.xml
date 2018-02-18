@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<Root>
+  <Module  name = "LairTracker"
+    movie       = "LairTracker\LairTracker.swf"
+    flags       = " "
+    depth_layer = "Top"
+    sub_depth   = "5"
+    variable    = "LairTracker"
+    criteria    = "LairTracker &amp;&amp; (guimode &amp; (GUIMODEFLAGS_INPLAY | GUIMODEFLAGS_ENABLEALLGUI))"
+  />
+</Root>
