@@ -11,21 +11,19 @@ import com.GameInterface.WaypointInterface;
  * ...
  * @author fox
  */
-class com.fox.LairTracker.App
-{
+class com.fox.LairTracker.App {
 	private var m_swfRoot:MovieClip;
 	private var m_Player:Character
 	private var TrackedDynels:Object;
 	private var WaypointSystem;
 	static var TrackedObjects:Object;
-	
-	
-	public function App(root){
+
+	public function App(root) {
 		m_swfRoot = root
 	}
-	
-	public function onFrame(){
-		for (var idx in TrackedDynels){
+
+	public function onFrame() {
+		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
 			var scrPos:Point = dyn.GetScreenPosition();
 			var waypoint = WaypointSystem.m_RenderedWaypoints[dyn.GetID()];
@@ -36,8 +34,8 @@ class com.fox.LairTracker.App
 			waypoint = undefined;
 		}
 	}
-	
-	public function OnLoad(){
+
+	public function OnLoad() {
 		m_Player = Character.GetClientCharacter();
 		VicinitySystem.SignalDynelEnterVicinity.Connect(Track, this);
 		VicinitySystem.SignalDynelLeaveVicinity.Connect(Untrack, this);
@@ -78,32 +76,29 @@ class com.fox.LairTracker.App
 		TrackedObjects["7945487"] = true;
 		TrackedObjects["7945476"] = true;
 	}
-	
-	public function OnUnload(){
+
+	public function OnUnload() {
 		VicinitySystem.SignalDynelEnterVicinity.Disconnect(Track, this);
 		VicinitySystem.SignalDynelLeaveVicinity.Disconnect(Untrack, this);
 		m_swfRoot.onEnterFrame = undefined;
 		WaypointInterface.SignalPlayfieldChanged.Disconnect(UntrackAll, this);
 	}
-	
-	private function inList(dyn:Dynel){
-		/* 
-		 * dyn.GetName() seems to return xml, which is then converted to localized name, here im extracting the id from it
+
+	private function inList(dyn:Dynel) {
+		/*
+		 * dyn.GetName() seems to return xml, which is then converted to localized name
 		 * <remoteformat id="7945476" category="50200" key="OQW.I-V&Wgljh#fKaNu'" knubot="0"  ></remoteformat>
-		 * It seems to work on chat scripts too, could potentially be used to send localized chat messages,interesting.
-		 * 
 		 */
-		var str =  dyn.GetName()
-		var xml:XMLNode = new XML(str);
-		var id:String = xml.firstChild.attributes.id;
-		return TrackedObjects[string(id)];
+		//var xml:XMLNode = new XML(dyn.GetName());
+		//var id:String = xml.firstChild.attributes.id;
+		return TrackedObjects[string(dyn.GetStat(112))];
 	}
-	
-	private function Track(id:ID32){
+
+	private function Track(id:ID32) {
 		var dyn:Dynel = new Dynel(id);
-		if (id.GetType() == 51320){
+		if (id.GetType() == 51320) {
 			var label = inList(dyn);
-			if (label != undefined){
+			if (label != undefined) {
 				TrackedDynels[dyn.GetID().toString()] = dyn;
 				var WPBase:Waypoint = new Waypoint();
 				WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
@@ -112,7 +107,7 @@ class com.fox.LairTracker.App
 				WPBase.m_IsStackingWaypoint = true;
 				WPBase.m_Radius = 0;
 				WPBase.m_Color = 0xFF0000
-				WPBase.m_CollisionOffsetX = 0;
+								 WPBase.m_CollisionOffsetX = 0;
 				WPBase.m_CollisionOffsetY = 0;
 				WPBase.m_MinViewDistance = 0;
 				WPBase.m_MaxViewDistance = 50;
@@ -130,45 +125,45 @@ class com.fox.LairTracker.App
 			}
 		}
 	}
-	
-	private function Untrack(id:ID32){
+
+	private function Untrack(id:ID32) {
 		delete TrackedDynels[id.toString()]
 		delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 		WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
 		var tracking = false;
-		for (var str in TrackedObjects){
+		for (var str in TrackedObjects) {
 			tracking = true;
 			break
 		}
 		if (tracking) m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
 		else m_swfRoot.onEnterFrame = undefined;
 	}
-	
-	private function UntrackAll(){
-		for (var str in TrackedDynels){
+
+	private function UntrackAll() {
+		for (var str in TrackedDynels) {
 			var id:ID32 = TrackedDynels[str].GetID()
-			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
+						  delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
 		}
 		delete TrackedDynels
 		TrackedDynels = new Object();
 		m_swfRoot.onEnterFrame = undefined;
 	}
-	
+
 	//finds the dynels that were alredy loaded before i had time to connect my signals
-	private function kickstart(){
+	private function kickstart() {
 		var ls:WeakList = Dynel.s_DynelList
 		for (var num = 0; num < ls.GetLength(); num++) {
 			var dyn:Character = ls.GetObject(num);
 			Track(dyn.GetID());
 		}
 	}
-	
-	public function onActivated(){
+
+	public function onActivated() {
 		TrackedDynels = new Object();
 		kickstart();
 	}
-	public function onDeactivated(){
+	public function onDeactivated() {
 		UntrackAll();
 	}
 }
