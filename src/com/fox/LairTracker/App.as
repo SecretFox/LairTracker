@@ -17,7 +17,6 @@ class com.fox.LairTracker.App {
 	private var TrackedDynels:Object;
 	private var WaypointSystem;
 	static var TrackedObjects:Object;
-	private var AtNumber:Number;
 
 	public function App(root) {
 		m_swfRoot = root
@@ -110,7 +109,6 @@ class com.fox.LairTracker.App {
 			// Magicnumber,Stat 12 has a value when the item has not been picked up yet
 			var magics = dyn.GetStat(12);
 			if (label != undefined && magics) {
-				AtNumber = 0;
 				TrackedDynels[dyn.GetID().toString()] = dyn;
 				var WPBase:Waypoint = new Waypoint();
 				WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
