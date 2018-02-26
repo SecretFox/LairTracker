@@ -17,6 +17,7 @@ class com.fox.LairTracker.App {
 	private var TrackedDynels:Object;
 	private var WaypointSystem;
 	static var TrackedObjects:Object;
+	private var AtNumber:Number;
 
 	public function App(root) {
 		m_swfRoot = root
@@ -25,6 +26,9 @@ class com.fox.LairTracker.App {
 	public function onFrame() {
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
+			if (!dyn.GetStat(12)){
+				Untrack(dyn.GetID());
+			}
 			var scrPos:Point = dyn.GetScreenPosition();
 			var waypoint = WaypointSystem.m_RenderedWaypoints[dyn.GetID()];
 			waypoint.m_Waypoint.m_ScreenPositionX = scrPos.x;
@@ -75,6 +79,10 @@ class com.fox.LairTracker.App {
 		TrackedObjects["7945486"] = true;
 		TrackedObjects["7945487"] = true;
 		TrackedObjects["7945476"] = true;
+		//Misc
+		TrackedObjects["9265030"] = "C4";
+		TrackedObjects["9265009"] = "C4";
+		
 	}
 
 	public function OnUnload() {
@@ -91,14 +99,18 @@ class com.fox.LairTracker.App {
 		 */
 		//var xml:XMLNode = new XML(dyn.GetName());
 		//var id:String = xml.firstChild.attributes.id;
+		//UtilsBase.PrintChatText(dyn.GetName() + " " + string(dyn.GetStat(112)));
 		return TrackedObjects[string(dyn.GetStat(112))];
 	}
-
+	
 	private function Track(id:ID32) {
 		var dyn:Dynel = new Dynel(id);
 		if (id.GetType() == 51320) {
 			var label = inList(dyn);
-			if (label != undefined) {
+			// Magicnumber,Stat 12 has a value when the item has not been picked up yet
+			var magics = dyn.GetStat(12);
+			if (label != undefined && magics) {
+				AtNumber = 0;
 				TrackedDynels[dyn.GetID().toString()] = dyn;
 				var WPBase:Waypoint = new Waypoint();
 				WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
@@ -106,8 +118,8 @@ class com.fox.LairTracker.App {
 				WPBase.m_IsScreenWaypoint = true;
 				WPBase.m_IsStackingWaypoint = true;
 				WPBase.m_Radius = 0;
-				WPBase.m_Color = 0xFF0000
-								 WPBase.m_CollisionOffsetX = 0;
+				WPBase.m_Color = 0xFF0000;
+				WPBase.m_CollisionOffsetX = 0;
 				WPBase.m_CollisionOffsetY = 0;
 				WPBase.m_MinViewDistance = 0;
 				WPBase.m_MaxViewDistance = 50;
@@ -141,11 +153,10 @@ class com.fox.LairTracker.App {
 
 	private function UntrackAll() {
 		for (var str in TrackedDynels) {
-			var id:ID32 = TrackedDynels[str].GetID()
-						  delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
+			var id:ID32 = TrackedDynels[str].GetID();
+			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
 		}
-		delete TrackedDynels
 		TrackedDynels = new Object();
 		m_swfRoot.onEnterFrame = undefined;
 	}
@@ -158,7 +169,7 @@ class com.fox.LairTracker.App {
 			Track(dyn.GetID());
 		}
 	}
-
+	
 	public function onActivated() {
 		TrackedDynels = new Object();
 		kickstart();
