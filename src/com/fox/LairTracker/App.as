@@ -92,13 +92,6 @@ class com.fox.LairTracker.App {
 	}
 
 	private function inList(dyn:Dynel) {
-		/*
-		 * dyn.GetName() seems to return xml, which is then converted to localized name
-		 * <remoteformat id="7945476" category="50200" key="OQW.I-V&Wgljh#fKaNu'" knubot="0"  ></remoteformat>
-		 */
-		//var xml:XMLNode = new XML(dyn.GetName());
-		//var id:String = xml.firstChild.attributes.id;
-		//UtilsBase.PrintChatText(dyn.GetName() + " " + string(dyn.GetStat(112)));
 		return TrackedObjects[string(dyn.GetStat(112))];
 	}
 	
@@ -106,7 +99,7 @@ class com.fox.LairTracker.App {
 		var dyn:Dynel = new Dynel(id);
 		if (id.GetType() == 51320) {
 			var label = inList(dyn);
-			// Magicnumber,Stat 12 has a value when the item has not been picked up yet
+			// Applied model ID? Anyways, Stat 12 has a value when the item has not been picked up yet
 			var magics = dyn.GetStat(12);
 			if (label != undefined && magics) {
 				TrackedDynels[dyn.GetID().toString()] = dyn;
@@ -137,16 +130,18 @@ class com.fox.LairTracker.App {
 	}
 
 	private function Untrack(id:ID32) {
-		delete TrackedDynels[id.toString()]
-		delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
-		WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
-		var tracking = false;
-		for (var str in TrackedObjects) {
-			tracking = true;
-			break
+		if(TrackedDynels[id.toString()]){
+			delete TrackedDynels[id.toString()]
+			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
+			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
+			var tracking = false;
+			for (var str in TrackedDynels) {
+				tracking = true;
+				break
+			}
+			if (tracking) m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
+			else m_swfRoot.onEnterFrame = undefined;
 		}
-		if (tracking) m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
-		else m_swfRoot.onEnterFrame = undefined;
 	}
 
 	private function UntrackAll() {
@@ -170,8 +165,10 @@ class com.fox.LairTracker.App {
 	
 	public function onActivated() {
 		TrackedDynels = new Object();
+		m_swfRoot.onEnterFrame = undefined;
 		kickstart();
 	}
+	
 	public function onDeactivated() {
 		UntrackAll();
 	}
