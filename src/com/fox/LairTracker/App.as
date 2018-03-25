@@ -1,5 +1,6 @@
 import com.GameInterface.Game.Dynel;
 import com.GameInterface.Game.Character;
+import com.GameInterface.ProjectUtilsBase;
 import com.GameInterface.VicinitySystem;
 import com.Utils.ID32;
 import com.Utils.WeakList;
@@ -25,7 +26,7 @@ class com.fox.LairTracker.App {
 	public function onFrame() {
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
-			if (!dyn.GetStat(12)){
+			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) == 0){
 				Untrack(dyn.GetID());
 			}
 			var scrPos:Point = dyn.GetScreenPosition();
@@ -81,7 +82,10 @@ class com.fox.LairTracker.App {
 		//Misc
 		TrackedObjects["9265030"] = "C4";
 		TrackedObjects["9265009"] = "C4";
-		
+		TrackedObjects["5981406"] = true;
+		TrackedObjects["5981403"] = true;
+		TrackedObjects["5981422"] = true;
+		TrackedObjects["5981414"] = true;
 	}
 
 	public function OnUnload() {
@@ -99,9 +103,12 @@ class com.fox.LairTracker.App {
 		var dyn:Dynel = new Dynel(id);
 		if (id.GetType() == 51320) {
 			var label = inList(dyn);
-			// Applied model ID? Anyways, Stat 12 has a value when the item has not been picked up yet
-			var magics = dyn.GetStat(12);
-			if (label != undefined && magics) {
+			/*	Checks if the item is interactable
+			*	Downside is that you can't tell your raid members where items are located 
+			* 	if you have already completed your quest, but on the plus side you no longer see items that you can't use anymore.
+			*/
+			var interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID());
+			if (label != undefined && interactable != 0	) {
 				TrackedDynels[dyn.GetID().toString()] = dyn;
 				var WPBase:Waypoint = new Waypoint();
 				WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;

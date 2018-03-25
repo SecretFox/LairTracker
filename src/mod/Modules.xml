@@ -2,7 +2,7 @@
 <Root>
   <Module  name = "LairTracker"
     movie       = "LairTracker\LairTracker.swf"
-    flags       = " "
+    flags       = "GMF_DONT_UNLOAD"
     depth_layer = "Top"
     sub_depth   = "5"
     variable    = "LairTracker"
