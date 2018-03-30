@@ -43,8 +43,8 @@ class com.fox.LairTracker.App {
 		for (var idx in Unuseable) {
 			var dyn:Dynel = Unuseable[idx];
 			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) != 0) {
-				delete Unuseable[dyn.GetID().toString()];
 				Track(dyn.GetID());
+				delete Unuseable[dyn.GetID().toString()];
 			}
 		}
 	}
@@ -114,7 +114,7 @@ class com.fox.LairTracker.App {
 		if (id.GetType() == 51320) {
 			var label = inList(dyn);
 			/*	Checks if the item is interactable
-			*	Downside is that you can't tell your raid members where items are located once you have completed your quest, 
+			*	Downside is that you can't tell your raid members where items are located once you have completed your quest,
 			* 	but on the plus side you no longer see items that you can't use anymore.
 			*/
 			var interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID());
@@ -154,24 +154,23 @@ class com.fox.LairTracker.App {
 			delete TrackedDynels[id.toString()]
 			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
-			var tracking = false;
-			for (var str in TrackedDynels) {
-				tracking = true;
-				break
-			}
-			if (tracking) m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
-			else m_swfRoot.onEnterFrame = undefined;
 		}
 		if (Unuseable[id.toString()]) {
 			delete Unuseable[id.toString()]
-			var tracking = false;
-			for (var str in Unuseable) {
-				tracking = true;
-				break
-			}
-			if (tracking) m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
-			else m_swfRoot.onEnterFrame = undefined;
 		}
+
+		var tracking = false;
+		for (var str in TrackedDynels) {
+			tracking = true;
+			break
+		}
+		for (var str in Unuseable) {
+			tracking = true;
+			break
+		}
+		if (tracking) m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
+		else m_swfRoot.onEnterFrame = undefined;
+
 	}
 
 	private function UntrackAll() {
