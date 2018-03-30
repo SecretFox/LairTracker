@@ -17,7 +17,8 @@ class com.fox.LairTracker.App {
 	private var m_Player:Character
 	private var TrackedDynels:Object;
 	private var WaypointSystem;
-	static var TrackedObjects:Object;
+	static var TrackingList:Object;
+	private var Unuseable:Object;
 
 	public function App(root) {
 		m_swfRoot = root
@@ -26,16 +27,25 @@ class com.fox.LairTracker.App {
 	public function onFrame() {
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
-			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) == 0){
+			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) == 0) {
 				Untrack(dyn.GetID());
+				Unuseable[dyn.GetID().toString()] = dyn;
+			} else {
+				var scrPos:Point = dyn.GetScreenPosition();
+				var waypoint = WaypointSystem.m_RenderedWaypoints[dyn.GetID()];
+				waypoint.m_Waypoint.m_ScreenPositionX = scrPos.x;
+				waypoint.m_Waypoint.m_ScreenPositionY = scrPos.y;
+				waypoint.m_Waypoint.m_DistanceToCam = dyn.GetCameraDistance(0);
+				waypoint.Update(Stage.visibleRect.width);
+				waypoint = undefined;
 			}
-			var scrPos:Point = dyn.GetScreenPosition();
-			var waypoint = WaypointSystem.m_RenderedWaypoints[dyn.GetID()];
-			waypoint.m_Waypoint.m_ScreenPositionX = scrPos.x;
-			waypoint.m_Waypoint.m_ScreenPositionY = scrPos.y;
-			waypoint.m_Waypoint.m_DistanceToCam = dyn.GetCameraDistance(0);
-			waypoint.Update(Stage.visibleRect.width);
-			waypoint = undefined;
+		}
+		for (var idx in Unuseable) {
+			var dyn:Dynel = Unuseable[idx];
+			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) != 0) {
+				delete Unuseable[dyn.GetID().toString()];
+				Track(dyn.GetID());
+			}
 		}
 	}
 
@@ -45,47 +55,47 @@ class com.fox.LairTracker.App {
 		VicinitySystem.SignalDynelLeaveVicinity.Connect(Untrack, this);
 		WaypointSystem = _root.waypoints;
 		WaypointInterface.SignalPlayfieldChanged.Connect(UntrackAll, this);
-		TrackedObjects = new Object();
+		TrackingList = new Object();
 		//KM
-		TrackedObjects["7936503"] = true;
+		TrackingList["7936503"] = true;
 		//SC
-		TrackedObjects["7944316"] = true;
-		TrackedObjects["7944347"] = true;
+		TrackingList["7944316"] = true;
+		TrackingList["7944347"] = true;
 		//BM
-		TrackedObjects["7945224"] = "1st Ward stone";
-		TrackedObjects["7945225"] = "2nd Ward stone";
-		TrackedObjects["7945226"] = "3rd Ward stone";
-		TrackedObjects["7945227"] = "4th Ward stone";
-		TrackedObjects["7945228"] = "5th Ward stone";
-		TrackedObjects["7945229"] = "6th Ward stone";
+		TrackingList["7945224"] = "1st Ward stone";
+		TrackingList["7945225"] = "2nd Ward stone";
+		TrackingList["7945226"] = "3rd Ward stone";
+		TrackingList["7945227"] = "4th Ward stone";
+		TrackingList["7945228"] = "5th Ward stone";
+		TrackingList["7945229"] = "6th Ward stone";
 		//SD
-		TrackedObjects["7929136"] = true;
-		TrackedObjects["7929138"] = true;
+		TrackingList["7929136"] = true;
+		TrackingList["7929138"] = true;
 		//CotSG
-		TrackedObjects["7945562"] = true;
-		TrackedObjects["7945563"] = true;
-		TrackedObjects["7945561"] = true;
-		TrackedObjects["7929477"] = true;
+		TrackingList["7945562"] = true;
+		TrackingList["7945563"] = true;
+		TrackingList["7945561"] = true;
+		TrackingList["7929477"] = true;
 		//BF
-		TrackedObjects["7877092"] = "Broken piece";
-		TrackedObjects["7877040"] = true;
-		TrackedObjects["7877091"] = true;
+		TrackingList["7877092"] = "Broken piece";
+		TrackingList["7877040"] = true;
+		TrackingList["7877091"] = true;
 		//SF
-		TrackedObjects["7912109"] = true;
-		TrackedObjects["7863152"] = "Barrel";
+		TrackingList["7912109"] = true;
+		TrackingList["7863152"] = "Barrel";
 		//CF
-		TrackedObjects["7945479"] = true;
-		TrackedObjects["7945485"] = true;
-		TrackedObjects["7945486"] = true;
-		TrackedObjects["7945487"] = true;
-		TrackedObjects["7945476"] = true;
+		TrackingList["7945479"] = true;
+		TrackingList["7945485"] = true;
+		TrackingList["7945486"] = true;
+		TrackingList["7945487"] = true;
+		TrackingList["7945476"] = true;
 		//Misc
-		TrackedObjects["9265030"] = "C4";
-		TrackedObjects["9265009"] = "C4";
-		TrackedObjects["5981406"] = true;
-		TrackedObjects["5981403"] = true;
-		TrackedObjects["5981422"] = true;
-		TrackedObjects["5981414"] = true;
+		TrackingList["9265030"] = "C4";
+		TrackingList["9265009"] = "C4";
+		TrackingList["5981406"] = true;
+		TrackingList["5981403"] = true;
+		TrackingList["5981422"] = true;
+		TrackingList["5981414"] = true;
 	}
 
 	public function OnUnload() {
@@ -96,16 +106,16 @@ class com.fox.LairTracker.App {
 	}
 
 	private function inList(dyn:Dynel) {
-		return TrackedObjects[string(dyn.GetStat(112))];
+		return TrackingList[string(dyn.GetStat(112))];
 	}
-	
+
 	private function Track(id:ID32) {
 		var dyn:Dynel = new Dynel(id);
 		if (id.GetType() == 51320) {
 			var label = inList(dyn);
 			/*	Checks if the item is interactable
-			*	Downside is that you can't tell your raid members where items are located 
-			* 	if you have already completed your quest, but on the plus side you no longer see items that you can't use anymore.
+			*	Downside is that you can't tell your raid members where items are located once you have completed your quest, 
+			* 	but on the plus side you no longer see items that you can't use anymore.
 			*/
 			var interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID());
 			if (label != undefined && interactable != 0	) {
@@ -132,17 +142,30 @@ class com.fox.LairTracker.App {
 				WaypointSystem.m_CurrentPFInterface.m_Waypoints[WPBase.m_Id.toString()] = WPBase;
 				WaypointSystem.m_CurrentPFInterface.SignalWaypointAdded.Emit(WPBase.m_Id);
 				m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
+			} else if (label) {
+				Unuseable[dyn.GetID().toString()] = dyn;
+				m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
 			}
 		}
 	}
 
 	private function Untrack(id:ID32) {
-		if(TrackedDynels[id.toString()]){
+		if (TrackedDynels[id.toString()]) {
 			delete TrackedDynels[id.toString()]
 			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
 			var tracking = false;
 			for (var str in TrackedDynels) {
+				tracking = true;
+				break
+			}
+			if (tracking) m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
+			else m_swfRoot.onEnterFrame = undefined;
+		}
+		if (Unuseable[id.toString()]) {
+			delete Unuseable[id.toString()]
+			var tracking = false;
+			for (var str in Unuseable) {
 				tracking = true;
 				break
 			}
@@ -158,6 +181,7 @@ class com.fox.LairTracker.App {
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
 		}
 		TrackedDynels = new Object();
+		Unuseable = new Object();
 		m_swfRoot.onEnterFrame = undefined;
 	}
 
@@ -169,13 +193,14 @@ class com.fox.LairTracker.App {
 			Track(dyn.GetID());
 		}
 	}
-	
+
 	public function onActivated() {
 		TrackedDynels = new Object();
+		Unuseable = new Object();
 		m_swfRoot.onEnterFrame = undefined;
 		kickstart();
 	}
-	
+
 	public function onDeactivated() {
 		UntrackAll();
 	}
