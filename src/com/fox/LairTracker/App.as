@@ -1,7 +1,6 @@
 import com.GameInterface.Game.Dynel;
 import com.GameInterface.Game.Character;
 import com.GameInterface.ProjectUtilsBase;
-import com.GameInterface.UtilsBase;
 import com.GameInterface.VicinitySystem;
 import com.Utils.ID32;
 import com.Utils.WeakList;
@@ -124,9 +123,6 @@ class com.fox.LairTracker.App {
 	}
 
 	private function inList(dyn:Dynel) {
-		if(dyn.GetName()){
-			UtilsBase.PrintChatText(dyn.GetName() + " " + dyn.GetStat(112) + " " + dyn.GetStat(12));
-		}
 		return TrackingList[string(dyn.GetStat(112))];
 	}
 
