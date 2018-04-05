@@ -1,6 +1,7 @@
 import com.GameInterface.Game.Dynel;
 import com.GameInterface.Game.Character;
 import com.GameInterface.ProjectUtilsBase;
+import com.GameInterface.UtilsBase;
 import com.GameInterface.VicinitySystem;
 import com.Utils.ID32;
 import com.Utils.WeakList;
@@ -92,10 +93,27 @@ class com.fox.LairTracker.App {
 		//Misc
 		TrackingList["9265030"] = "C4";
 		TrackingList["9265009"] = "C4";
+		//mushrooms
 		TrackingList["5981406"] = true;
 		TrackingList["5981403"] = true;
 		TrackingList["5981422"] = true;
 		TrackingList["5981414"] = true;
+		
+		//Dead Drop
+		TrackingList["9406780"] = true;
+		
+		//Maize,works,but not necessary
+		//TrackingList["9368621"] = true;
+		
+		//sheet metal,but not necessary
+		//TrackingList["9405971"] = true;
+		
+		//graffiti,"canvas"
+		TrackingList["9396921"] = true;
+		TrackingList["9400928"] = true;
+		//water bucket
+		TrackingList["9396919"] = true;
+		
 	}
 
 	public function OnUnload() {
@@ -106,6 +124,9 @@ class com.fox.LairTracker.App {
 	}
 
 	private function inList(dyn:Dynel) {
+		if(dyn.GetName()){
+			UtilsBase.PrintChatText(dyn.GetName() + " " + dyn.GetStat(112) + " " + dyn.GetStat(12));
+		}
 		return TrackingList[string(dyn.GetStat(112))];
 	}
 
