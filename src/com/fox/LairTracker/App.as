@@ -14,20 +14,21 @@ import com.GameInterface.WaypointInterface;
  */
 class com.fox.LairTracker.App {
 	private var m_swfRoot:MovieClip;
-	private var m_Player:Character
 	private var TrackedDynels:Object;
 	private var WaypointSystem;
 	static var TrackingList:Object;
 	private var Unuseable:Object;
 
 	public function App(root) {
-		m_swfRoot = root
+		m_swfRoot = root;
 	}
 
 	public function onFrame() {
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
-			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) == 0) {
+			var interactable;
+			dyn.GetID().GetType() == 51320 ? interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID()):interactable = true;
+			if (interactable == 0) {
 				Untrack(dyn.GetID());
 				Unuseable[dyn.GetID().toString()] = dyn;
 			} else {
@@ -42,6 +43,7 @@ class com.fox.LairTracker.App {
 		}
 		for (var idx in Unuseable) {
 			var dyn:Dynel = Unuseable[idx];
+			//NPC's shouldnt get put on this list,so should only need to check interaction type.
 			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) != 0) {
 				Track(dyn.GetID());
 				delete Unuseable[dyn.GetID().toString()];
@@ -50,12 +52,12 @@ class com.fox.LairTracker.App {
 	}
 
 	public function OnLoad() {
-		m_Player = Character.GetClientCharacter();
 		VicinitySystem.SignalDynelEnterVicinity.Connect(Track, this);
 		VicinitySystem.SignalDynelLeaveVicinity.Connect(Untrack, this);
 		WaypointSystem = _root.waypoints;
 		WaypointInterface.SignalPlayfieldChanged.Connect(UntrackAll, this);
 		TrackingList = new Object();
+		//lairs
 		//KM
 		TrackingList["7936503"] = true;
 		//SC
@@ -90,29 +92,41 @@ class com.fox.LairTracker.App {
 		TrackingList["7945487"] = true;
 		TrackingList["7945476"] = true;
 		//Misc
+		//scenarios
 		TrackingList["9265030"] = "C4";
 		TrackingList["9265009"] = "C4";
-		//mushrooms
+		//supply crate
+		TrackingList["33551"] = true;
+		//mushrooms for Breakfast of Champignons
 		TrackingList["5981406"] = true;
 		TrackingList["5981403"] = true;
 		TrackingList["5981422"] = true;
 		TrackingList["5981414"] = true;
+		//al-Merayah bomb mission
+		TrackingList["5971505"] = true;
+		//some orochi tower keycards
+		TrackingList["9076194"] = true;
+		TrackingList["9076197"] = true;
+		TrackingList["8873224"] = true;
+		TrackingList["9076195"] = true;
+		TrackingList["9076196"] = true;
+		TrackingList["8895315"] = true;
+		TrackingList["8894863"] = true;
+		TrackingList["8894864"] = true;
+		TrackingList["8907638"] = true;
 		
+		//SA
 		//Dead Drop
 		TrackingList["9406780"] = true;
-		
+
 		//Maize,works,but not necessary
 		//TrackingList["9368621"] = true;
-		
-		//sheet metal,but not necessary
-		//TrackingList["9405971"] = true;
-		
-		//graffiti,"canvas"
+
+		//graffiti + "canvas"
 		TrackingList["9396921"] = true;
 		TrackingList["9400928"] = true;
 		//water bucket
 		TrackingList["9396919"] = true;
-		
 	}
 
 	public function OnUnload() {
@@ -123,19 +137,23 @@ class com.fox.LairTracker.App {
 	}
 
 	private function inList(dyn:Dynel) {
+		//com.GameInterface.UtilsBase.PrintChatText(dyn.GetName() + " " +dyn.GetStat(112));
 		return TrackingList[string(dyn.GetStat(112))];
 	}
 
 	private function Track(id:ID32) {
-		var dyn:Dynel = new Dynel(id);
-		if (id.GetType() == 51320) {
+		var type = id.GetType();
+		if (type == 51320 || type == 50000 ) {
+			var dyn:Dynel = new Dynel(id);
 			var label = inList(dyn);
+			if (!label) return;
 			/*	Checks if the item is interactable
 			*	Downside is that you can't tell your raid members where items are located once you have completed your quest,
 			* 	but on the plus side you no longer see items that you can't use anymore.
 			*/
-			var interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID());
-			if (label != undefined && interactable != 0	) {
+			var interactable
+			type == 51320 ? interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID()):interactable = true;
+			if (label && interactable != 0	) {
 				TrackedDynels[dyn.GetID().toString()] = dyn;
 				var WPBase:Waypoint = new Waypoint();
 				WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
@@ -175,7 +193,6 @@ class com.fox.LairTracker.App {
 		if (Unuseable[id.toString()]) {
 			delete Unuseable[id.toString()]
 		}
-
 		var tracking = false;
 		for (var str in TrackedDynels) {
 			tracking = true;
