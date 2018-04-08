@@ -26,8 +26,7 @@ class com.fox.LairTracker.App {
 	public function onFrame() {
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
-			var interactable;
-			dyn.GetID().GetType() == 51320 ? interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID()):interactable = true;
+			var interactable = (dyn.GetID().GetType() == 51320) ? ProjectUtilsBase.GetInteractionType(dyn.GetID()):true;
 			if (interactable == 0) {
 				Untrack(dyn.GetID());
 				Unuseable[dyn.GetID().toString()] = dyn;
@@ -151,8 +150,7 @@ class com.fox.LairTracker.App {
 			*	Downside is that you can't tell your raid members where items are located once you have completed your quest,
 			* 	but on the plus side you no longer see items that you can't use anymore.
 			*/
-			var interactable
-			type == 51320 ? interactable = ProjectUtilsBase.GetInteractionType(dyn.GetID()):interactable = true;
+			var interactable = (type == 51320) ? ProjectUtilsBase.GetInteractionType(dyn.GetID()):true;
 			if (label && interactable != 0	) {
 				TrackedDynels[dyn.GetID().toString()] = dyn;
 				var WPBase:Waypoint = new Waypoint();
