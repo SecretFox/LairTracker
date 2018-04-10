@@ -16,35 +16,31 @@ import com.GameInterface.WaypointInterface;
  */
 class com.fox.LairTracker.App {
 	private var m_swfRoot:MovieClip;
+	private var WaypointSystem;
+	
 	private var TrackedDynels:Object;
 	private var RaidDynels:Object;
-	private var WaypointSystem;
+	private var WatchedDynels:Object;
 	static var TrackingList:Object;
-	private var Unuseable:Object;
-	private var FrameCounter:Number = 0;
+	
 	private var inRaid:Boolean;
 
 	public function App(root) {
 		m_swfRoot = root;
 	}
 
-	private function IsInRaid() {
+	private function CheckIfInRaid() {
 		inRaid = TeamInterface.IsInRaid(CharacterBase.GetClientCharID());
 	}
 
 	public function onFrame() {
-		FrameCounter++;
-		if (FrameCounter > 1000){
-			IsInRaid();
-			FrameCounter = 0;
-		}
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
 			var interactable = (dyn.GetID().GetType() == 51320) ? ProjectUtilsBase.GetInteractionType(dyn.GetID()):true;
 			if (interactable == 0) {
-				// No need to track it for RaidDynels, unseable tracking will take care of that 
+				// No need to add it to RaidDynels(if in raid), unuseable tracking will take care of that
 				Untrack(dyn.GetID());
-				Unuseable[dyn.GetID().toString()] = dyn;
+				WatchedDynels[dyn.GetID().toString()] = dyn;
 			} else {
 				var scrPos:Point = dyn.GetScreenPosition();
 				var waypoint = WaypointSystem.m_RenderedWaypoints[dyn.GetID()];
@@ -59,7 +55,7 @@ class com.fox.LairTracker.App {
 			var dyn:Dynel = RaidDynels[idx];
 			if (!inRaid){
 				Untrack(dyn.GetID());
-				Unuseable[dyn.GetID().toString()] = dyn;
+				WatchedDynels[dyn.GetID().toString()] = dyn;
 			}
 			else{
 				if (dyn.GetStat(12)) {
@@ -72,15 +68,15 @@ class com.fox.LairTracker.App {
 					waypoint = undefined;
 				} else {
 					Untrack(dyn.GetID());
-					Unuseable[dyn.GetID().toString()] = dyn;
+					WatchedDynels[dyn.GetID().toString()] = dyn;
 				}
 			}
 		}
-		for (var idx in Unuseable) {
-			var dyn:Dynel = Unuseable[idx];
+		for (var idx in WatchedDynels) {
+			var dyn:Dynel = WatchedDynels[idx];
 			//NPC's shouldnt get put on this list,so should only need to check interaction type.
 			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) != 0 || (inRaid && dyn.GetStat(12))) {
-				delete Unuseable[dyn.GetID().toString()];
+				delete WatchedDynels[dyn.GetID().toString()];
 				Track(dyn.GetID());
 			}
 		}
@@ -162,6 +158,8 @@ class com.fox.LairTracker.App {
 		TrackingList["9400928"] = true;
 		//water bucket
 		TrackingList["9396919"] = true;
+		TeamInterface.SignalClientJoinedRaid.Connect(CheckIfInRaid, this);
+		TeamInterface.SignalClientLeftRaid.Connect(CheckIfInRaid, this);
 	}
 
 	public function OnUnload() {
@@ -169,6 +167,8 @@ class com.fox.LairTracker.App {
 		VicinitySystem.SignalDynelLeaveVicinity.Disconnect(Untrack, this);
 		m_swfRoot.onEnterFrame = undefined;
 		WaypointInterface.SignalPlayfieldChanged.Disconnect(UntrackAll, this);
+		TeamInterface.SignalClientJoinedRaid.Disconnect(CheckIfInRaid, this);
+		TeamInterface.SignalClientLeftRaid.Disconnect(CheckIfInRaid, this);
 	}
 
 	private function inList(dyn:Dynel) {
@@ -211,37 +211,34 @@ class com.fox.LairTracker.App {
 				m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
 			}
 			//still track items if in raid and it has a model
-			else if (dyn.GetStat(12)) {
-				IsInRaid();
-				if(inRaid){
-					RaidDynels[dyn.GetID().toString()] = dyn;
-					var WPBase:Waypoint = new Waypoint();
-					WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
-					WPBase.m_WaypointState = _global.Enums.QuestWaypointState.e_WPStateActive;
-					WPBase.m_IsScreenWaypoint = true;
-					WPBase.m_IsStackingWaypoint = true;
-					WPBase.m_Radius = 0;
-					WPBase.m_Color = 0xFFFFFF;
-					WPBase.m_CollisionOffsetX = 0;
-					WPBase.m_CollisionOffsetY = 0;
-					WPBase.m_MinViewDistance = 0;
-					WPBase.m_MaxViewDistance = 50;
-					WPBase.m_Id = dyn.GetID();
-					if (label == true) WPBase.m_Label = dyn.GetName();
-					else WPBase.m_Label = label;
-					WPBase.m_WorldPosition = dyn.GetPosition(0);
-					var scrPos:Point = dyn.GetScreenPosition();
-					WPBase.m_ScreenPositionX = scrPos.x;
-					WPBase.m_ScreenPositionY = scrPos.y;
-					WPBase.m_DistanceToCam = dyn.GetCameraDistance(0);
-					WaypointSystem.m_CurrentPFInterface.m_Waypoints[WPBase.m_Id.toString()] = WPBase;
-					WaypointSystem.m_CurrentPFInterface.SignalWaypointAdded.Emit(WPBase.m_Id);
-					m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
-				}
+			else if (dyn.GetStat(12) && inRaid) {
+				RaidDynels[dyn.GetID().toString()] = dyn;
+				var WPBase:Waypoint = new Waypoint();
+				WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
+				WPBase.m_WaypointState = _global.Enums.QuestWaypointState.e_WPStateActive;
+				WPBase.m_IsScreenWaypoint = true;
+				WPBase.m_IsStackingWaypoint = true;
+				WPBase.m_Radius = 0;
+				WPBase.m_Color = 0xFFFFFF;
+				WPBase.m_CollisionOffsetX = 0;
+				WPBase.m_CollisionOffsetY = 0;
+				WPBase.m_MinViewDistance = 0;
+				WPBase.m_MaxViewDistance = 50;
+				WPBase.m_Id = dyn.GetID();
+				if (label == true) WPBase.m_Label = dyn.GetName();
+				else WPBase.m_Label = label;
+				WPBase.m_WorldPosition = dyn.GetPosition(0);
+				var scrPos:Point = dyn.GetScreenPosition();
+				WPBase.m_ScreenPositionX = scrPos.x;
+				WPBase.m_ScreenPositionY = scrPos.y;
+				WPBase.m_DistanceToCam = dyn.GetCameraDistance(0);
+				WaypointSystem.m_CurrentPFInterface.m_Waypoints[WPBase.m_Id.toString()] = WPBase;
+				WaypointSystem.m_CurrentPFInterface.SignalWaypointAdded.Emit(WPBase.m_Id);
+				m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
 			} 
 			//keep chekcing if the item becomes interactable or (player is in raid and item has a model)
 			else {
-				Unuseable[dyn.GetID().toString()] = dyn;
+				WatchedDynels[dyn.GetID().toString()] = dyn;
 				m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
 			}
 		}
@@ -258,8 +255,8 @@ class com.fox.LairTracker.App {
 			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
 		}
-		if (Unuseable[id.toString()]) {
-			delete Unuseable[id.toString()]
+		if (WatchedDynels[id.toString()]) {
+			delete WatchedDynels[id.toString()]
 		}
 		var tracking = false;
 		for (var str in TrackedDynels) {
@@ -270,7 +267,7 @@ class com.fox.LairTracker.App {
 			tracking = true;
 			break
 		}
-		for (var str in Unuseable) {
+		for (var str in WatchedDynels) {
 			tracking = true;
 			break
 		}
@@ -291,7 +288,7 @@ class com.fox.LairTracker.App {
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
 		}
 		TrackedDynels = new Object();
-		Unuseable = new Object();
+		WatchedDynels = new Object();
 		RaidDynels = new Object();
 		m_swfRoot.onEnterFrame = undefined;
 	}
@@ -306,19 +303,15 @@ class com.fox.LairTracker.App {
 	}
 
 	public function onActivated() {
-		IsInRaid();
 		TrackedDynels = new Object();
 		RaidDynels = new Object();
-		Unuseable = new Object();
-		TeamInterface.SignalClientJoinedRaid.Connect(IsInRaid, this);
-		TeamInterface.SignalClientLeftRaid.Connect(IsInRaid, this);
+		WatchedDynels = new Object();
+		CheckIfInRaid();
 		m_swfRoot.onEnterFrame = undefined;
 		kickstart();
 	}
 
 	public function onDeactivated() {
-		TeamInterface.SignalClientJoinedRaid.Disconnect(IsInRaid, this);
-		TeamInterface.SignalClientLeftRaid.Disconnect(IsInRaid,this);
 		UntrackAll();
 	}
 }
