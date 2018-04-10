@@ -3,6 +3,7 @@ import com.GameInterface.Game.Dynel;
 import com.GameInterface.Game.Character;
 import com.GameInterface.Game.TeamInterface;
 import com.GameInterface.ProjectUtilsBase;
+import com.GameInterface.UtilsBase;
 import com.GameInterface.VicinitySystem;
 import com.Utils.ID32;
 import com.Utils.WeakList;
@@ -182,7 +183,7 @@ class com.fox.LairTracker.App {
 			var dyn:Dynel = new Dynel(id);
 			var label = inList(dyn);
 			if (!label) return;
-			IsInRaid();
+			
 			// not 0 if item is interactable
 			var interactable = (type == 51320) ? ProjectUtilsBase.GetInteractionType(dyn.GetID()):true;
 			if (interactable != 0	) {
@@ -211,30 +212,33 @@ class com.fox.LairTracker.App {
 				m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
 			}
 			//still track items if in raid and it has a model
-			else if (inRaid && dyn.GetStat(12)) {
-				RaidDynels[dyn.GetID().toString()] = dyn;
-				var WPBase:Waypoint = new Waypoint();
-				WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
-				WPBase.m_WaypointState = _global.Enums.QuestWaypointState.e_WPStateActive;
-				WPBase.m_IsScreenWaypoint = true;
-				WPBase.m_IsStackingWaypoint = true;
-				WPBase.m_Radius = 0;
-				WPBase.m_Color = 0xFFFFFF;
-				WPBase.m_CollisionOffsetX = 0;
-				WPBase.m_CollisionOffsetY = 0;
-				WPBase.m_MinViewDistance = 0;
-				WPBase.m_MaxViewDistance = 50;
-				WPBase.m_Id = dyn.GetID();
-				if (label == true) WPBase.m_Label = dyn.GetName();
-				else WPBase.m_Label = label;
-				WPBase.m_WorldPosition = dyn.GetPosition(0);
-				var scrPos:Point = dyn.GetScreenPosition();
-				WPBase.m_ScreenPositionX = scrPos.x;
-				WPBase.m_ScreenPositionY = scrPos.y;
-				WPBase.m_DistanceToCam = dyn.GetCameraDistance(0);
-				WaypointSystem.m_CurrentPFInterface.m_Waypoints[WPBase.m_Id.toString()] = WPBase;
-				WaypointSystem.m_CurrentPFInterface.SignalWaypointAdded.Emit(WPBase.m_Id);
-				m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
+			else if (dyn.GetStat(12)) {
+				IsInRaid();
+				if(inRaid){
+					RaidDynels[dyn.GetID().toString()] = dyn;
+					var WPBase:Waypoint = new Waypoint();
+					WPBase.m_WaypointType = _global.Enums.WaypointType.e_RMWPScannerBlip;
+					WPBase.m_WaypointState = _global.Enums.QuestWaypointState.e_WPStateActive;
+					WPBase.m_IsScreenWaypoint = true;
+					WPBase.m_IsStackingWaypoint = true;
+					WPBase.m_Radius = 0;
+					WPBase.m_Color = 0xFFFFFF;
+					WPBase.m_CollisionOffsetX = 0;
+					WPBase.m_CollisionOffsetY = 0;
+					WPBase.m_MinViewDistance = 0;
+					WPBase.m_MaxViewDistance = 50;
+					WPBase.m_Id = dyn.GetID();
+					if (label == true) WPBase.m_Label = dyn.GetName();
+					else WPBase.m_Label = label;
+					WPBase.m_WorldPosition = dyn.GetPosition(0);
+					var scrPos:Point = dyn.GetScreenPosition();
+					WPBase.m_ScreenPositionX = scrPos.x;
+					WPBase.m_ScreenPositionY = scrPos.y;
+					WPBase.m_DistanceToCam = dyn.GetCameraDistance(0);
+					WaypointSystem.m_CurrentPFInterface.m_Waypoints[WPBase.m_Id.toString()] = WPBase;
+					WaypointSystem.m_CurrentPFInterface.SignalWaypointAdded.Emit(WPBase.m_Id);
+					m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
+				}
 			} 
 			//keep chekcing if the item becomes interactable or (player is in raid and item has a model)
 			else {
