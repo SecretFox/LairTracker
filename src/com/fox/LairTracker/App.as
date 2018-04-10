@@ -3,7 +3,6 @@ import com.GameInterface.Game.Dynel;
 import com.GameInterface.Game.Character;
 import com.GameInterface.Game.TeamInterface;
 import com.GameInterface.ProjectUtilsBase;
-import com.GameInterface.UtilsBase;
 import com.GameInterface.VicinitySystem;
 import com.Utils.ID32;
 import com.Utils.WeakList;
