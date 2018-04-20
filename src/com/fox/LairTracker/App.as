@@ -24,7 +24,7 @@ class com.fox.LairTracker.App {
 	static var TrackingList:Object;
 
 	private var inRaid:Boolean;
-	private var m_ValidInterval;
+	private var m_validityCheck;
 
 	public function App(root) {
 		m_swfRoot = root;
@@ -170,7 +170,6 @@ class com.fox.LairTracker.App {
 		TrackingList["9400928"] = true;
 		//water bucket
 		TrackingList["9396919"] = true;
-		TrackingList["9368621"] = true;
 		//sheet metal
 		TrackingList["9405973"] = true;
 
@@ -182,7 +181,7 @@ class com.fox.LairTracker.App {
 		VicinitySystem.SignalDynelEnterVicinity.Disconnect(Track, this);
 		VicinitySystem.SignalDynelLeaveVicinity.Disconnect(Untrack, this);
 		m_swfRoot.onEnterFrame = undefined;
-		clearInterval(m_ValidInterval);
+		clearInterval(m_validityCheck);
 		WaypointInterface.SignalPlayfieldChanged.Disconnect(UntrackAll, this);
 		TeamInterface.SignalClientJoinedRaid.Disconnect(CheckIfInRaid, this);
 		TeamInterface.SignalClientLeftRaid.Disconnect(CheckIfInRaid, this);
@@ -244,14 +243,14 @@ class com.fox.LairTracker.App {
 	private function TurnTrackingOn() {
 		if (!m_swfRoot.onEnterFrame) {
 			m_swfRoot.onEnterFrame = Delegate.create(this, onFrame);
-			clearInterval(m_ValidInterval);
-			m_ValidInterval = setInterval(Delegate.create(this, checkValidity), 500);
+			clearInterval(m_validityCheck);
+			m_validityCheck = setInterval(Delegate.create(this, checkValidity), 500);
 		}
 	}
 	
 	private function TurnTrackingOff(){
 		m_swfRoot.onEnterFrame = undefined;
-		clearInterval(m_ValidInterval);
+		clearInterval(m_validityCheck);
 	}
 
 	private function Untrack(id:ID32) {
