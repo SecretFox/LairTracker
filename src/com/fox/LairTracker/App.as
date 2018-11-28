@@ -32,16 +32,17 @@ class com.fox.LairTracker.App {
 
 	private function CheckIfInRaid() {
 		inRaid = TeamInterface.IsInRaid(CharacterBase.GetClientCharID());
+		//inRaid = true//Debug
 	}
 
 	// Checks if the tracked dynels should still be tracked
-	// or if they should be moved from watchlist to visible
+	// 		or if they should be moved from watchlist to visible
 	private function checkValidity() {
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
 			var interactable = (dyn.GetID().GetType() == 51320) ? ProjectUtilsBase.GetInteractionType(dyn.GetID()):true;
 			if (interactable == 0) {
-				// No need to add it to RaidDynels(if in raid), WatchedDynels will take care of that
+				// No need to add it to RaidDynels, WatchedDynels will take care of that
 				Untrack(dyn.GetID());
 				WatchedDynels[dyn.GetID().toString()] = dyn;
 			}
@@ -60,7 +61,7 @@ class com.fox.LairTracker.App {
 		}
 		for (var idx in WatchedDynels) {
 			var dyn:Dynel = WatchedDynels[idx];
-			//NPC's shouldnt get put on this list, so we don't need to check the ID
+			//NPC's don't get put on this list, so we don't need to check the ID
 			if (ProjectUtilsBase.GetInteractionType(dyn.GetID()) != 0 || (inRaid && dyn.GetStat(12))) {
 				delete WatchedDynels[dyn.GetID().toString()];
 				Track(dyn.GetID());
@@ -68,7 +69,7 @@ class com.fox.LairTracker.App {
 		}
 	}
 
-	//Updates the drawn waypoints each frame
+	//Updates the drawn waypoints on each frame
 	public function onFrame() {
 		for (var idx in TrackedDynels) {
 			var dyn:Dynel = TrackedDynels[idx];
@@ -161,10 +162,7 @@ class com.fox.LairTracker.App {
 		//SA
 		//Dead Drop
 		TrackingList["9406780"] = true;
-
-		//Maize,works,but not necessary
-		//TrackingList["9368621"] = true;
-
+		//Maize is 9368621,but it's not necessary
 		//graffiti + "canvas"
 		TrackingList["9396921"] = true;
 		TrackingList["9400928"] = true;
@@ -187,6 +185,16 @@ class com.fox.LairTracker.App {
 		TeamInterface.SignalClientLeftRaid.Disconnect(CheckIfInRaid, this);
 	}
 
+	public function onActivated() {
+		UntrackAll();
+		CheckIfInRaid();
+		kickstart();
+	}
+
+	public function onDeactivated() {
+		UntrackAll();
+	}
+	
 	private function inList(dyn:Dynel) {
 		//com.GameInterface.UtilsBase.PrintChatText(dyn.GetName() + " " +dyn.GetStat(112));
 		//if (dyn.IsGhosting() && !dyn.isClientChar()) return true; // Anima form tracking?
@@ -254,36 +262,42 @@ class com.fox.LairTracker.App {
 	}
 
 	private function Untrack(id:ID32) {
+		var changed:Boolean = false;
 		if (TrackedDynels[id.toString()]) {
 			delete TrackedDynels[id.toString()]
 			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
+			changed = true;
 		}
 		if (RaidDynels[id.toString()]) {
 			delete RaidDynels[id.toString()]
 			delete WaypointSystem.m_CurrentPFInterface.m_Waypoints[id.toString()];
 			WaypointSystem.m_CurrentPFInterface.SignalWaypointRemoved.Emit(id.toString());
+			changed = true;
 		}
 		if (WatchedDynels[id.toString()]) {
 			delete WatchedDynels[id.toString()]
+			changed = true;
 		}
-		var tracking = false;
-		for (var str in TrackedDynels) {
-			tracking = true;
-			break
-		}
-		for (var str in RaidDynels) {
-			tracking = true;
-			break
-		}
-		for (var str in WatchedDynels) {
-			tracking = true;
-			break
-		}
-		if (tracking) {
-			TurnTrackingOn();
-		} else {
-			TurnTrackingOff();
+		if(changed){
+			var tracking = false;
+			for (var str in TrackedDynels) {
+				tracking = true;
+				break
+			}
+			for (var str in RaidDynels) {
+				tracking = true;
+				break
+			}
+			for (var str in WatchedDynels) {
+				tracking = true;
+				break
+			}
+			if (tracking) {
+				TurnTrackingOn();
+			} else {
+				TurnTrackingOff();
+			}
 		}
 	}
 
@@ -304,22 +318,12 @@ class com.fox.LairTracker.App {
 		TurnTrackingOff();
 	}
 
-	//finds the dynels that were alredy loaded before i had time to connect my signals
+	//finds the dynels that were alredy loaded before i had chance to connect my signals
 	private function kickstart() {
 		var ls:WeakList = Dynel.s_DynelList
 		for (var num = 0; num < ls.GetLength(); num++) {
 			var dyn:Character = ls.GetObject(num);
 			Track(dyn.GetID());
 		}
-	}
-
-	public function onActivated() {
-		UntrackAll();
-		CheckIfInRaid();
-		kickstart();
-	}
-
-	public function onDeactivated() {
-		UntrackAll();
 	}
 }
