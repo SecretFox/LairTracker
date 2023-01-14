@@ -11,7 +11,7 @@
     <movie version="8" />
     <movie minorVersion="0" />
     <movie platform="Flash Player" />
-    <movie background="#FFFFFF" />
+    <movie background="#ADAAA7" />
   </output>
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
@@ -48,8 +48,8 @@
   <!-- Executed before build -->
   <preBuildCommand />
   <!-- Executed after build -->
-  <postBuildCommand alwaysRun="False">xcopy "$(ProjectDir)\bin\*.*" "G:\Secret World Legends\Data\Gui\Custom\Flash\$(ProjectName)\*.*" /e /y
-xcopy "$(ProjectDir)\src\mod\*.*" "G:\Secret World Legends\Data\Gui\Custom\Flash\$(ProjectName)\*.*" /e /y
+  <postBuildCommand alwaysRun="False">xcopy "$(ProjectDir)\bin\*.*" "H:\Secret World Legends\Data\Gui\Custom\Flash\$(ProjectName)\*.*" /e /y
+xcopy "$(ProjectDir)\src\mod\*.*" "H:\Secret World Legends\Data\Gui\Custom\Flash\$(ProjectName)\*.*" /e /y
 
 xcopy "$(ProjectDir)\src\mod\*.*" "$(ProjectDir)/deployment/data/Gui/custom/flash/$(ProjectName)/*.*" /e /y
 xcopy "$(ProjectDir)\bin\*.*" "$(ProjectDir)/deployment/Data/Gui/Custom/Flash/$(ProjectName)/*.*" /e /y</postBuildCommand>
