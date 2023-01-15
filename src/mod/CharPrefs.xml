@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?> 
 <Root>
   <Value name="LairTracker" value="true" />
+  <Value name="LairTracker_Range" value="60" />
+  <Value name="LairTracker_BoostEnabled" value="true" />
+  <Value name="LairTracker_AlwaysShowInRaid" value="true" />
 </Root>
