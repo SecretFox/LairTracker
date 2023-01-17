@@ -1,3 +1,4 @@
+import com.GameInterface.AccountManagement;
 import com.GameInterface.DistributedValueBase;
 import com.GameInterface.Dynels;
 import com.GameInterface.Game.CharacterBase;
@@ -109,6 +110,10 @@ class com.fox.LairTracker.App
         TrackingList["9396919"] = true;
         //sheet metal
         TrackingList["9405973"] = true;
+
+        // boosters for Dead drop
+        TrackingList["9398663"] = "booster";
+        TrackingList["9445902"] = "booster";
     }
 
     private function CheckIfInRaid()
@@ -226,7 +231,7 @@ class com.fox.LairTracker.App
         }
     }
 
-    private function inList(dyn:Dynel)
+    private function isTrackedObject(dyn:Dynel)
     {
         //com.GameInterface.UtilsBase.PrintChatText(dyn.GetName() + " " +dyn.GetStat(112));
         //if (dyn.IsGhosting() && !dyn.isClientChar()) return true; // Anima form tracking?
@@ -235,6 +240,12 @@ class com.fox.LairTracker.App
 
     private function BruteForceDynel()
     {
+        if ( AccountManagement.GetInstance().GetLoginState() != _global.Enums.LoginState.e_LoginStateInPlay ||
+            Character.GetClientCharacter().IsInCinematic() ||
+            _root.fadetoblack.m_BlackScreen._visible)
+        {
+            return;
+        }
         var target:ID32 = ID32(bruteForceArray.pop());
         if ( target )
         {
@@ -244,7 +255,7 @@ class com.fox.LairTracker.App
                 return;
             }
             var dynel:Dynel = Dynel.GetDynel(target);
-            var label = inList(dynel);
+            var label = isTrackedObject(dynel);
             if ( label && dynel.GetDistanceToPlayer() < DistributedValueBase.GetDValue("LairTracker_Range"))
             {
                 VicinitySystem.SignalDynelEnterVicinity.Emit(target, true);
@@ -294,11 +305,13 @@ class com.fox.LairTracker.App
         if (id.GetType() == 51320 || id.GetType() == 50000 )
         {
             var dyn:Dynel = Dynel.GetDynel(id);
-            var label = inList(dyn);
+            var label = isTrackedObject(dyn);
             if (!label) return;
             if ( !noBoost){
                 bruteForceTarget = dyn;
+                RangeBoost(id);
             }
+            if ( label == "booster") return
             // Interactable or NPC
             var interactable = id.GetType() == 51320 ? ProjectUtilsBase.GetInteractionType(id) : true;
             // interactable or inraid and dynel has model(not picked yet)
